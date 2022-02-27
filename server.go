@@ -23,8 +23,9 @@ func handleConnection(c net.Conn) {
 
 		temp := strings.TrimSpace(string(message))
 		c.Write([]byte(string(temp)))
+		c.Close()
 	}
-	c.Close()
+
 }
 
 func main() {
