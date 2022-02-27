@@ -20,12 +20,17 @@ func handleConnection(c net.Conn) {
 			fmt.Println(err)
 			return
 		}
-
 		temp := strings.TrimSpace(string(message))
-		c.Write([]byte(string(temp)))
-		c.Close()
-	}
+		fmt.Println(temp)
+		checkFormat := func(c rune) bool {
+			return c == '|'
+		}
+		fields := strings.FieldsFunc(temp, checkFormat)
+		fmt.Println(fields)
+		//c.Write([]byte(string(temp)))
 
+	}
+	c.Close()
 }
 
 func main() {
