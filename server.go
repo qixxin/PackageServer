@@ -65,15 +65,15 @@ func handleConnection(c net.Conn) {
 				return c == '|'
 			}
 			fields := strings.FieldsFunc(message, splitString)
-
+			command := fields[0]
 			if len(fields) == 2 || len(fields) == 3 {
-				if fields[0] == "INDEX" {
+				if command == "INDEX" {
 					c.Write([]byte("OK\n"))
 				}
-				if fields[0] == "REMOVE" {
+				if command == "REMOVE" {
 					c.Write([]byte("OK\n"))
 				}
-				if fields[0] == "QUERY" {
+				if command == "QUERY" {
 					c.Write([]byte("OK\n"))
 				}
 			}
