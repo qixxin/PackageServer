@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	message := "INDEX|cloog|gmp,isl,pkg-config\n"
+	//message := "INDEX|cloog|gmp,isl,pkg-config\n"
+	message := "INDEXclooggmp,isl,pkg-config\n"
 	temp := strings.TrimSpace(string(message))
 	fmt.Println(temp)
 	checkFormat := func(c rune) bool {
