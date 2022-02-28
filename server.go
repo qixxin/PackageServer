@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -19,13 +20,15 @@ func checkFormat(message string) bool {
 	splitDependencies := func(c rune) bool {
 		return c == ','
 	}
+	illegalChar := func(c rune) bool {
+		return !unicode.IsLetter(c)
+	}
 	fields := strings.FieldsFunc(message, splitString)
-	fmt.Println(fields)
 
 	if len(fields) == 2 || len(fields) == 3 {
-		if fields[0] == "INDEX" || fields[0] == "REMOVE" {
+		if fields[0] == "INDEX" || fields[0] == "REMOVE" || fields[0] == "QUERY" {
 			payload := fields[1]
-			if !strings.Contains(payload, " ") {
+			if strings.IndexFunc(payload, illegalChar) != -1 {
 				if len(fields) == 2 {
 					return true
 				} else if len(fields) == 3 {
@@ -46,7 +49,7 @@ func checkFormat(message string) bool {
 func handleConnection(c net.Conn) {
 	fmt.Printf("Serving %s\n", c.RemoteAddr().String())
 	for {
-		//TCP Read
+		//Read from TCP
 		message, err := bufio.NewReader(c).ReadString('\n')
 		if err != nil {
 			fmt.Println(err)
@@ -56,8 +59,26 @@ func handleConnection(c net.Conn) {
 		temp := strings.TrimSpace(string(message))
 		fmt.Println(temp)
 
+		//Check Format
 		if checkFormat(temp) {
+			splitString := func(c rune) bool {
+				return c == '|'
+			}
+			fields := strings.FieldsFunc(message, splitString)
 
+			if len(fields) == 2 || len(fields) == 3 {
+				if fields[0] == "INDEX" {
+					c.Write([]byte("OK\n"))
+				}
+				if fields[0] == "REMOVE" {
+					c.Write([]byte("OK\n"))
+				}
+				if fields[0] == "QUERY" {
+					c.Write([]byte("OK\n"))
+				}
+			}
+		} else {
+			c.Write([]byte("ERROR\n"))
 		}
 
 		//Initialize TCP writer
