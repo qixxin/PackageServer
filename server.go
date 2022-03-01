@@ -130,28 +130,42 @@ func handleConnection(c net.Conn) {
 				fmt.Println(messageLength)
 				if command == "INDEX" {
 					if messageLength == 2 {
-						if _, ok := packageList[packageName]; ok {
+						mutex.RLock()
+						_, present := packageList[packageName]
+						mutex.RUnlock()
+						if present {
+							mutex.Lock()
 							delete(packageList, packageName)
+							mutex.Unlock()
 						}
+						mutex.Lock()
 						packageList[packageName] = map[string]string{}
+						mutex.Unlock()
 						fmt.Println("Indexed OK")
 						c.Write([]byte("OK\n"))
 					} else if messageLength == 3 {
 						dependencies := strings.FieldsFunc(fields[2], splitDependencies)
 						fmt.Println(dependenciesCheck(dependencies))
 						if dependenciesCheck(dependencies) {
-							if _, ok := packageList[packageName]; ok {
+							mutex.RLock()
+							_, present := packageList[packageName]
+							mutex.RUnlock()
+							if present {
+								mutex.Lock()
 								delete(packageList, packageName)
 								packageList[packageName] = map[string]string{}
 								for i := 1; i < len(dependencies)-1; i++ {
 									packageList[packageName][dependencies[i]] = dependencies[i]
 								}
+								mutex.Unlock()
 								c.Write([]byte("OK\n"))
 							} else {
+								mutex.Lock()
 								packageList[packageName] = map[string]string{}
 								for i := 1; i < len(dependencies)-1; i++ {
 									packageList[packageName][dependencies[i]] = dependencies[i]
 								}
+								mutex.Unlock()
 								c.Write([]byte("OK\n"))
 							}
 						} else {
