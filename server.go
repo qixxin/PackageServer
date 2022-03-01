@@ -14,12 +14,12 @@ const (
 	port = "8080"
 )
 
-var packageList = struct {
+/* var packageList = struct {
 	sync.RWMutex
 	m map[string]map[string]string
-}{m: make(map[string]map[string]string)}
+}{m: make(map[string]map[string]string)} */
 
-//var packageList = make(map[string]map[string]string)
+var packageList = make(map[string]map[string]string)
 var mutex = &sync.RWMutex{}
 
 func checkFormat(message string) bool {
@@ -48,7 +48,7 @@ func checkFormat(message string) bool {
 				packageFields := strings.FieldsFunc(payload, splitPackageName)
 				for _, packageField := range packageFields {
 					if strings.Contains(packageField, "+") {
-						fmt.Println(strings.Index(packageField, "+"))
+						//fmt.Println(strings.Index(packageField, "+"))
 						if strings.Index(packageField, "+") < len(packageField)-3 {
 							return false
 						}
@@ -77,8 +77,8 @@ func checkFormat(message string) bool {
 //Check if dependencies are indexed
 func dependenciesCheck(message []string) bool {
 	mutex.RLock()
-	for i := 1; i < len(message)-1; i++ {
-		if _, ok := packageList.m[message[i]]; ok {
+	for _, v := range message {
+		if _, ok := packageList[v]; ok {
 			mutex.RUnlock()
 			return true
 		}
@@ -89,7 +89,7 @@ func dependenciesCheck(message []string) bool {
 
 func removalDependenciesCheck(message string) bool {
 	mutex.RLock()
-	for _, value := range packageList.m {
+	for _, value := range packageList {
 		if len(value) != 0 {
 			for _, dependency := range value {
 				if dependency == message {
@@ -125,33 +125,35 @@ func handleConnection(c net.Conn) {
 			splitDependencies := func(c rune) bool {
 				return c == ','
 			}
-			fields := strings.FieldsFunc(message, splitString)
+			fields := strings.FieldsFunc(temp, splitString)
 			messageLength := len(fields)
 			command := fields[0]
 			packageName := fields[1]
 			if messageLength == 2 || messageLength == 3 {
+				fmt.Println(messageLength)
 				if command == "INDEX" {
 					if messageLength == 2 {
-						if _, ok := packageList.m[packageName]; ok {
-							delete(packageList.m, packageName)
+						if _, ok := packageList[packageName]; ok {
+							delete(packageList, packageName)
 						}
-						packageList.m[packageName] = map[string]string{}
+						packageList[packageName] = map[string]string{}
 						fmt.Println("Indexed OK")
 						c.Write([]byte("OK\n"))
 					} else if messageLength == 3 {
 						dependencies := strings.FieldsFunc(fields[2], splitDependencies)
+						fmt.Println(dependenciesCheck(dependencies))
 						if dependenciesCheck(dependencies) {
-							if _, ok := packageList.m[packageName]; ok {
-								delete(packageList.m, packageName)
-								packageList.m[packageName] = map[string]string{}
+							if _, ok := packageList[packageName]; ok {
+								delete(packageList, packageName)
+								packageList[packageName] = map[string]string{}
 								for i := 1; i < len(dependencies)-1; i++ {
-									packageList.m[packageName][dependencies[i]] = dependencies[i]
+									packageList[packageName][dependencies[i]] = dependencies[i]
 								}
 								c.Write([]byte("OK\n"))
 							} else {
-								packageList.m[packageName] = map[string]string{}
+								packageList[packageName] = map[string]string{}
 								for i := 1; i < len(dependencies)-1; i++ {
-									packageList.m[packageName][dependencies[i]] = dependencies[i]
+									packageList[packageName][dependencies[i]] = dependencies[i]
 								}
 								c.Write([]byte("OK\n"))
 							}
@@ -164,13 +166,14 @@ func handleConnection(c net.Conn) {
 				if command == "REMOVE" {
 					//c.Write([]byte("OK\n"))
 					mutex.RLock()
-					if _, ok := packageList.m[packageName]; ok {
-						mutex.RUnlock()
+					_, present := packageList[packageName]
+					mutex.RUnlock()
+					if present {
 						if removalDependenciesCheck(packageName) {
 							c.Write([]byte("FAIL\n"))
 						} else {
 							mutex.Lock()
-							delete(packageList.m, packageName)
+							delete(packageList, packageName)
 							mutex.Unlock()
 							c.Write([]byte("OK\n"))
 						}
@@ -182,10 +185,9 @@ func handleConnection(c net.Conn) {
 							return
 						}
 					}
-
 				}
 				if command == "QUERY" {
-					if _, ok := packageList.m[command]; ok {
+					if _, ok := packageList[packageName]; ok {
 						c.Write([]byte("OK\n"))
 					} else {
 						c.Write([]byte("FAIL\n"))
