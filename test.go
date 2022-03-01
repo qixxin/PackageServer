@@ -1,26 +1,42 @@
+//To be removed
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 type Package struct {
 	name       string
 	dependency string
 }
 
-var packageList map[string]Package
-
 func main() {
-	//message := "INDEX|cloog|gmp,isl,pkg-config\n"
-	/* message := "INDEXclooggmp,isl,pkg-config\n"
-	temp := strings.TrimSpace(string(message))
-	fmt.Println(temp)
-	checkFormat := func(c rune) bool {
-		return c == '|'
+	var x = map[string]map[string]string{}
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	x["fruits"] = map[string]string{}
+	x["colors"] = map[string]string{}
+	//x["cmake"] = map[string]string{}
+
+	x["fruits"]["a"] = "apple"
+	x["fruits"]["b"] = "banana"
+
+	x["colors"]["r"] = "red"
+	x["colors"]["b"] = "blue"
+	mutex.Unlock()
+	//x["cmake"][""] = ""
+	mutex.RLock()
+	if val, ok := x["cmake"]; ok {
+		fmt.Println(val)
+		if len(val) == 0 {
+			fmt.Println("No dependencies")
+		}
+		fmt.Println("found something")
 	}
-	fields := strings.FieldsFunc(temp, checkFormat)
-	fmt.Println(fields)
-	fmt.Println(len(fields)) */
-	packageList = make(map[string]Package)
-	packageList["package1"] = Package{}
-	fmt.Println("Hello World")
+	mutex.RUnlock()
+
+	//v := x["cmake"]
+
+	//fmt.Println(v)
 }
