@@ -29,17 +29,32 @@ func checkFormat(message string) bool {
 	splitDependencies := func(c rune) bool {
 		return c == ','
 	}
+	splitPackageName := func(c rune) bool {
+		return c == '-'
+	}
 	var isStringAlphabetic = regexp.MustCompile(`^[a-zA-Z0-9_+-]*$`).MatchString
+	//var isCharNumeric = regexp.MustCompile(`[0-9+]`).MatchString
+
 	fields := strings.FieldsFunc(message, splitString)
 	fieldLength := len(fields)
 	fmt.Println(message)
-	fmt.Println(fieldLength)
+	//fmt.Println(fieldLength)
 	if fieldLength == 2 || fieldLength == 3 {
 		if fields[0] == "INDEX" || fields[0] == "REMOVE" || fields[0] == "QUERY" {
 			payload := fields[1]
-			fmt.Println("Reached Here:" + payload)
+			//fmt.Println("Reached Here:" + payload)
 			if isStringAlphabetic(payload) {
 				fmt.Println("AlphabeticPassed")
+				packageFields := strings.FieldsFunc(payload, splitPackageName)
+				for _, packageField := range packageFields {
+					if strings.Contains(packageField, "+") {
+						fmt.Println(strings.Index(packageField, "+"))
+						if strings.Index(packageField, "+") < len(packageField)-3 {
+							return false
+						}
+					}
+				}
+
 				if len(fields) == 2 {
 					return true
 				} else if len(fields) == 3 {
@@ -121,8 +136,9 @@ func handleConnection(c net.Conn) {
 							delete(packageList.m, packageName)
 						}
 						packageList.m[packageName] = map[string]string{}
+						fmt.Println("Indexed OK")
 						c.Write([]byte("OK\n"))
-					} else {
+					} else if messageLength == 3 {
 						dependencies := strings.FieldsFunc(fields[2], splitDependencies)
 						if dependenciesCheck(dependencies) {
 							if _, ok := packageList.m[packageName]; ok {
@@ -140,6 +156,7 @@ func handleConnection(c net.Conn) {
 								c.Write([]byte("OK\n"))
 							}
 						} else {
+							fmt.Println("Indexed FAIL")
 							c.Write([]byte("FAIL\n"))
 						}
 					}
@@ -178,6 +195,7 @@ func handleConnection(c net.Conn) {
 		} else {
 			fmt.Println("Sent ERROR")
 			c.Write([]byte("ERROR\n"))
+			//c.Close()
 		}
 
 		//Initialize TCP writer
