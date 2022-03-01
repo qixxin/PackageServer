@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"regexp"
 	"strings"
 	"sync"
-	"unicode"
 )
 
 const (
@@ -29,21 +29,24 @@ func checkFormat(message string) bool {
 	splitDependencies := func(c rune) bool {
 		return c == ','
 	}
-	illegalChar := func(c rune) bool {
-		return !unicode.IsLetter(c)
-	}
+	var isStringAlphabetic = regexp.MustCompile(`^[a-zA-Z0-9_+-]*$`).MatchString
 	fields := strings.FieldsFunc(message, splitString)
-
-	if len(fields) == 2 || len(fields) == 3 {
+	fieldLength := len(fields)
+	fmt.Println(message)
+	fmt.Println(fieldLength)
+	if fieldLength == 2 || fieldLength == 3 {
 		if fields[0] == "INDEX" || fields[0] == "REMOVE" || fields[0] == "QUERY" {
 			payload := fields[1]
-			if strings.IndexFunc(payload, illegalChar) != -1 {
+			fmt.Println("Reached Here:" + payload)
+			if isStringAlphabetic(payload) {
+				fmt.Println("AlphabeticPassed")
 				if len(fields) == 2 {
 					return true
 				} else if len(fields) == 3 {
 					dependencies := strings.FieldsFunc(fields[2], splitDependencies)
 					for i := 1; i < len(dependencies)-1; i++ {
 						if strings.Contains(dependencies[i], " ") {
+							fmt.Println("dependency contains space")
 							return false
 						}
 					}
@@ -52,6 +55,7 @@ func checkFormat(message string) bool {
 			}
 		}
 	}
+	fmt.Println("field len failed")
 	return false
 }
 
@@ -96,7 +100,7 @@ func handleConnection(c net.Conn) {
 
 		//Remove whitespaces and split strings
 		temp := strings.TrimSpace(string(message))
-		fmt.Println(temp)
+		//fmt.Println(temp)
 		fmt.Println(checkFormat(temp))
 		//Command logic
 		if checkFormat(temp) {
@@ -172,6 +176,7 @@ func handleConnection(c net.Conn) {
 				}
 			}
 		} else {
+			fmt.Println("Sent ERROR")
 			c.Write([]byte("ERROR\n"))
 		}
 
