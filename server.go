@@ -140,11 +140,15 @@ func handleConnection(c net.Conn) {
 					}
 				}
 				if command == "REMOVE" {
+					mutex.RLock()
 					if _, ok := packageList.m[packageName]; ok {
+						mutex.RUnlock()
 						if removalDependenciesCheck(packageName) {
 							c.Write([]byte("FAIL\n"))
 						} else {
+							mutex.Lock()
 							delete(packageList.m, packageName)
+							mutex.Unlock()
 							c.Write([]byte("OK\n"))
 						}
 					} else {
