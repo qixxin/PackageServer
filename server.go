@@ -33,7 +33,6 @@ func checkFormat(message string) bool {
 		return c == '-'
 	}
 	var isStringAlphabetic = regexp.MustCompile(`^[a-zA-Z0-9_+-]*$`).MatchString
-	//var isCharNumeric = regexp.MustCompile(`[0-9+]`).MatchString
 
 	fields := strings.FieldsFunc(message, splitString)
 	fieldLength := len(fields)
@@ -42,13 +41,11 @@ func checkFormat(message string) bool {
 	if fieldLength == 2 || fieldLength == 3 {
 		if fields[0] == "INDEX" || fields[0] == "REMOVE" || fields[0] == "QUERY" {
 			payload := fields[1]
-			//fmt.Println("Reached Here:" + payload)
 			if isStringAlphabetic(payload) {
 				fmt.Println("AlphabeticPassed")
 				packageFields := strings.FieldsFunc(payload, splitPackageName)
 				for _, packageField := range packageFields {
 					if strings.Contains(packageField, "+") {
-						//fmt.Println(strings.Index(packageField, "+"))
 						if strings.Index(packageField, "+") < len(packageField)-3 {
 							return false
 						}
@@ -228,4 +225,4 @@ func main() {
 
 }
 
-//First time GOlang ever. First time for everything.
+//First time writing in GO. There's a first time to everything.
