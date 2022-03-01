@@ -93,10 +93,11 @@ func handleConnection(c net.Conn) {
 			fmt.Println(err)
 			return
 		}
+
 		//Remove whitespaces and split strings
 		temp := strings.TrimSpace(string(message))
 		fmt.Println(temp)
-
+		fmt.Println(checkFormat(temp))
 		//Command logic
 		if checkFormat(temp) {
 			splitString := func(c rune) bool {
@@ -140,6 +141,7 @@ func handleConnection(c net.Conn) {
 					}
 				}
 				if command == "REMOVE" {
+					//c.Write([]byte("OK\n"))
 					mutex.RLock()
 					if _, ok := packageList.m[packageName]; ok {
 						mutex.RUnlock()
@@ -152,8 +154,14 @@ func handleConnection(c net.Conn) {
 							c.Write([]byte("OK\n"))
 						}
 					} else {
-						c.Write([]byte("OK\n"))
+						//c.Write([]byte("OK\n"))
+						_, err := c.Write([]byte("OK\n"))
+						if err != nil {
+							fmt.Println(err)
+							return
+						}
 					}
+
 				}
 				if command == "QUERY" {
 					if _, ok := packageList.m[command]; ok {
@@ -177,7 +185,7 @@ func handleConnection(c net.Conn) {
 }
 
 func main() {
-	l, err := net.Listen("tcp4", host+":"+port)
+	l, err := net.Listen("tcp", host+":"+port)
 	if err != nil {
 		fmt.Println(err)
 		return
