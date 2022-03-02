@@ -1,11 +1,16 @@
 FROM golang:latest
-ADD ./server.go /go/src/app
 
 RUN mkdir /app
-WORKDIR /app
 
-RUN go build -o server app/server
+ADD . /go/src/app
 
-CMD ["/app/server"]
+WORKDIR /go/src/app
+
+RUN go mod init 
+
+RUN go build -o main .
+
 EXPOSE 8080
+
+CMD ["./main"]
 
