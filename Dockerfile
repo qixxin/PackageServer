@@ -1,9 +1,16 @@
 FROM golang:latest
 
-WORKDIR /app
+RUN mkdir /app
 
-COPY server.go ./
+ADD . /go/src/app
+
+WORKDIR /go/src/app
+
+RUN go mod init 
+
+RUN go build -o main .
 
 EXPOSE 8080
 
-CMD ["go", "run", "./server.go"]
+CMD ["./main"]
+
